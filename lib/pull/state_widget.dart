@@ -6,8 +6,11 @@ import 'package:tuple/tuple.dart';
 typedef StateBuilder<M> = Widget Function(BuildContext context, M m);
 
 class MultiStateWidget<P extends SingleProvider<M>, M> extends StatelessWidget {
-  const MultiStateWidget({Key key, this.provider, this.builder})
-      : super(key: key);
+  const MultiStateWidget({
+    Key key,
+    @required this.provider,
+    @required this.builder,
+  }) : super(key: key);
   final P provider;
   final StateBuilder<M> builder;
 
@@ -42,7 +45,8 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatelessWidget {
             child: resWidget,
           );
         },
-        selector: null,
+        selector: (_, P provider) => Tuple3<PageState, M, String>(
+            provider.pageState, provider.m, provider.msg),
       ),
     );
   }
@@ -145,4 +149,10 @@ enum PageState {
   CONTENT,
   LOGIN,
   ERROR,
+}
+
+Widget configRefresh(Widget child) {
+  return RefreshConfiguration(
+    child: child,
+  );
 }
