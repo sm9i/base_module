@@ -35,14 +35,17 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatelessWidget {
           if (pageState == PageState.LOGIN) {
             resWidget = b(value?.item3 ?? 'no login');
           }
-          resWidget = builder(context, value.item2);
+          if (pageState == PageState.CONTENT) {
+            resWidget = builder(context, value.item2);
+          }
+
           return SmartRefresher(
             controller: provider.refreshController,
             onRefresh: provider.isRefresh ? provider.onRefresh : null,
             onLoading: provider.isLoadMore ? provider.onLoadMore : null,
             header: provider.headerWidget,
             footer: provider.footWidget,
-            child: resWidget,
+            child: resWidget ?? Container(),
           );
         },
         selector: (_, P provider) => Tuple3<PageState, M, String>(
