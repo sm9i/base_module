@@ -6,6 +6,15 @@ import 'package:tuple/tuple.dart';
 
 typedef StateBuilder<M> = Widget Function(BuildContext context, M m);
 
+///多状态布局
+///[provider] 需要的provider
+///[P] 继承自[SingleProvider] 的provider
+///[M] 页面需要的主要数据
+///[builder]build 页面提供[M]
+///[empty] 当页面是空的时候展示的页面
+///[error] 当页面是error
+///[noLogin] 未登录
+///[loading] loading
 class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
   const MultiStateWidget({
     Key key,
@@ -95,20 +104,40 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
   }
 }
 
+///用来控制页面的provider
+///[getInfo]
 abstract class SingleProvider<M> extends ChangeNotifier {
   final RefreshController _refreshController = RefreshController();
 
+  ///当页面是非正常布局的msg
   String _msg;
+
+  ///页面当前的状态 默认为加载中
   PageState _pageState = PageState.LOADING;
+
+  ///页面需要的主要数据
   M _m;
 
-  void onRefresh() {}
+  ///请求所需要的参数 如果需要监听就需要重写==
+  ProviderParameter get parameter => null;
 
-  void onLoadMore() {}
+  ///如果需要下拉刷新重写此方法
+  ///并且super放在最后一行否则不会请求数据
+  void onRefresh() {
+    getInfo();
+  }
 
-  void getInfo() {}
+  ///如果需要上拉加载重写此方法
+  ///并且super放在最后一行否则不会请求数据
+  void onLoadMore() {
+    getInfo();
+  }
 
-  ///empty
+  ///获取数据方法
+  ///必须重写调用
+  void getInfo();
+
+  ///设置布局为空
   void setEmpty({String msg}) {
     if (_pageState == PageState.EMPTY) {
       return;
@@ -118,6 +147,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///处理error
   void onError(dynamic e) {
     if (m is List && (m as List).isEmpty) {
       _pageState = PageState.EMPTY;
@@ -127,9 +157,10 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     _refreshController.refreshFailed();
     _refreshController.loadFailed();
     setError();
+    debugPrint('[PROVIDER] onError!!');
   }
 
-  ///error
+  ///设置布局为Error
   void setError({String msg}) {
     if (_pageState == PageState.ERROR) {
       return;
@@ -140,6 +171,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///设置布局为未登录
   void setNoLogin() {
     if (_pageState == PageState.LOGIN) {
       return;
@@ -149,6 +181,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///设置布局为加载中
   void setLoading() {
     if (_pageState == PageState.LOADING) {
       return;
@@ -158,6 +191,8 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///设置数据页面
+  ///如果数据为list 就会判断数据长度是否为0
   void setContent(M m) {
     _m = m;
     if (m is List && m.length == 0) {
@@ -168,6 +203,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///重置controller
   void resetRefreshController({bool noData = false}) {
     refreshController.refreshCompleted();
     if (noData) {
@@ -179,7 +215,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   @override
   void dispose() {
-    debugPrint("[PROVIDER] dispose!!");
+    debugPrint('[PROVIDER] dispose!!');
     _refreshController.dispose();
     super.dispose();
   }
@@ -192,8 +228,10 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   RefreshController get refreshController => _refreshController;
 
+  //页面是否需要加载更多 默认true 不需要就重写为false
   bool get isLoadMore => true;
 
+//页面是否需要下拉刷新 默认true 不需要就重写为false
   bool get isRefresh => true;
 
   Widget get headerWidget => const ClassicHeader();
@@ -201,13 +239,20 @@ abstract class SingleProvider<M> extends ChangeNotifier {
   Widget get footWidget => const ClassicFooter();
 }
 
-mixin Parame {}
+///请求参数
+mixin ProviderParameter {}
 
-class LoadMoreParame with Parame {
-  int page = 0;
-  int size = 1;
+///如果需要分页的参数
+///如果需要toJson必须带page 和size
+class LoadMoreParameter with ProviderParameter {
+  ///默认分页从[page]开始 一页[size] 个
+  LoadMoreParameter({this.page = 1, this.size = 15});
+
+  int page;
+  int size;
 }
 
+///页面状态
 enum PageState {
   EMPTY,
   LOADING,
