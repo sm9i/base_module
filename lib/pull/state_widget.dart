@@ -1,3 +1,4 @@
+import 'package:base_module/pull/config.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +40,8 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
 
 class _MultiStateWidgetState<P extends SingleProvider<M>, M>
     extends State<MultiStateWidget<P, M>> {
+  ConfigState configState;
+
   @override
   void initState() {
     widget.provider.getInfo();
@@ -46,9 +49,63 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
   }
 
   @override
+  void didChangeDependencies() {
+    configState = ConfigState.of(context);
+    super.didChangeDependencies();
+  }
+
+  @override
   void dispose() {
     widget.provider.dispose();
     super.dispose();
+  }
+
+  Widget loadingWidget() {
+    Widget res;
+    if (widget.loading != null) {
+      res = widget.loading;
+    } else if (configState != null && configState.loadingWidget != null) {
+      res = configState.loadingWidget;
+    } else {
+      res = const CupertinoActivityIndicator();
+    }
+    return Center(child: res);
+  }
+
+  Widget errorWidget({String error}) {
+    Widget res;
+    if (widget.error != null) {
+      res = widget.error;
+    } else if (configState != null && configState.errorWidget != null) {
+      res = configState.errorWidget;
+    } else {
+      res = _messageWidget(error ?? 'error');
+    }
+    return Center(child: res);
+  }
+
+  Widget emptyWidget({String empty}) {
+    Widget res;
+    if (widget.empty != null) {
+      res = widget.empty;
+    } else if (configState != null && configState.emptyWidget != null) {
+      res = configState.emptyWidget;
+    } else {
+      res = _messageWidget(empty ?? 'empty');
+    }
+    return Center(child: res);
+  }
+
+  Widget noLoginWidget({String msg}) {
+    Widget res;
+    if (widget.noLogin != null) {
+      res = widget.noLogin;
+    } else if (configState != null && configState.noLoginWidget != null) {
+      res = configState.noLoginWidget;
+    } else {
+      res = _messageWidget(msg ?? 'no login');
+    }
+    return Center(child: res);
   }
 
   @override
@@ -58,31 +115,22 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         final PageState pageState = value.item1;
         Widget resWidget;
         if (pageState == PageState.LOADING) {
-          resWidget = Center(
-              child: widget.loading ?? const CupertinoActivityIndicator());
-        }
-        if (pageState == PageState.ERROR) {
-          resWidget = Center(
-              child: widget.error ?? _messageWidget(value?.item3 ?? 'error'));
-        }
-        if (pageState == PageState.EMPTY) {
-          resWidget = Center(
-              child: widget.empty ?? _messageWidget(value?.item3 ?? 'empty'));
-        }
-        if (pageState == PageState.LOGIN) {
-          resWidget = Center(
-              child:
-                  widget.noLogin ?? _messageWidget(value?.item3 ?? 'no login'));
-        }
-        if (pageState == PageState.CONTENT) {
+          resWidget = loadingWidget();
+        } else if (pageState == PageState.ERROR) {
+          resWidget = errorWidget(error: value.item3);
+        } else if (pageState == PageState.EMPTY) {
+          resWidget = emptyWidget(empty: value.item3);
+        } else if (pageState == PageState.LOGIN) {
+          resWidget = noLoginWidget(msg: value.item3);
+        } else if (pageState == PageState.CONTENT) {
           resWidget = widget.builder(context, value.item2);
         }
         return SmartRefresher(
           controller: widget.provider.refreshController,
           onRefresh:
-              widget.provider.isRefresh ? widget.provider.onRefresh : null,
+          widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading:
-              widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
+          widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
           header: widget.provider.headerWidget,
           footer: widget.provider.footWidget,
           enablePullUp: widget.provider.isLoadMore,
@@ -90,8 +138,9 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
           child: resWidget ?? Container(),
         );
       },
-      selector: (_, P provider) => Tuple3<PageState, M, String>(
-          provider.pageState, provider.m, provider.msg),
+      selector: (_, P provider) =>
+          Tuple3<PageState, M, String>(
+              provider.pageState, provider.m, provider.msg),
     );
     return ChangeNotifierProvider<P>.value(
       value: widget.provider,
@@ -135,7 +184,13 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   ///获取数据方法
   ///必须重写调用
-  void getInfo();
+  ///熙增checkLoading 是否在刷新前loading 必须在获取数据前super;
+  @mustCallSuper
+  void getInfo([bool checkLoading = false]) {
+    if (checkLoading) {
+      setLoading();
+    }
+  }
 
   ///设置布局为空
   void setEmpty({String msg}) {
@@ -172,12 +227,12 @@ abstract class SingleProvider<M> extends ChangeNotifier {
   }
 
   ///设置布局为未登录
-  void setNoLogin() {
+  void setNoLogin({String msg}) {
     if (_pageState == PageState.LOGIN) {
       return;
     }
     _pageState = PageState.LOGIN;
-    _msg = _msg;
+    _msg = msg;
     notifyListeners();
   }
 
@@ -193,9 +248,10 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   ///设置数据页面
   ///如果数据为list 就会判断数据长度是否为0
-  void setContent(M m) {
+  ///[checkList]是否通过判断m是list然后去给定空界面
+  void setContent(M m, {bool checkList = true}) {
     _m = m;
-    if (m is List && m.length == 0) {
+    if (m is List && m.length == 0 && checkList) {
       _pageState = PageState.EMPTY;
     } else {
       _pageState = PageState.CONTENT;
