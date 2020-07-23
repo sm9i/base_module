@@ -16,6 +16,7 @@ typedef StateBuilder<M> = Widget Function(BuildContext context, M m);
 ///[error] 当页面是error
 ///[noLogin] 未登录
 ///[loading] loading
+///[autoDispose] 是否自动dispose
 class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
   const MultiStateWidget({
     Key key,
@@ -25,14 +26,21 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
     this.error,
     this.noLogin,
     this.loading,
+    this.autoDispose = true,
+    this.emptyBuilder,
   }) : super(key: key);
 
   final P provider;
   final StateBuilder<M> builder;
+  @Deprecated('过期的垃圾方法')
   final Widget empty;
+  final StateBuilder<String> emptyBuilder;
+
+  ///需要全部使用builder
   final Widget error;
   final Widget noLogin;
   final Widget loading;
+  final bool autoDispose;
 
   @override
   _MultiStateWidgetState<P, M> createState() => _MultiStateWidgetState<P, M>();
@@ -56,7 +64,9 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
 
   @override
   void dispose() {
-    widget.provider.dispose();
+    if (widget.autoDispose) {
+      widget.provider.dispose();
+    }
     super.dispose();
   }
 
@@ -84,11 +94,15 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
     return Center(child: res);
   }
 
-  Widget emptyWidget({String empty}) {
+  Widget emptyWidget(BuildContext context, {String empty}) {
     Widget res;
-    if (widget.empty != null) {
-      res = widget.empty;
-    } else if (configState != null && configState.emptyWidget != null) {
+    if (widget.emptyBuilder != null) {
+      res = widget.emptyBuilder(context, empty);
+    }
+//   else if (widget.empty != null) {
+//      res = widget.empty;
+//    }
+    else if (configState != null && configState.emptyWidget != null) {
       res = configState.emptyWidget;
     } else {
       res = _messageWidget(empty ?? 'empty');
@@ -119,7 +133,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         } else if (pageState == PageState.ERROR) {
           resWidget = errorWidget(error: value.item3);
         } else if (pageState == PageState.EMPTY) {
-          resWidget = emptyWidget(empty: value.item3);
+          resWidget = emptyWidget(context, empty: value.item3);
         } else if (pageState == PageState.LOGIN) {
           resWidget = noLoginWidget(msg: value.item3);
         } else if (pageState == PageState.CONTENT) {
@@ -128,9 +142,9 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         return SmartRefresher(
           controller: widget.provider.refreshController,
           onRefresh:
-          widget.provider.isRefresh ? widget.provider.onRefresh : null,
+              widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading:
-          widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
+              widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
           header: widget.provider.headerWidget,
           footer: widget.provider.footWidget,
           enablePullUp: widget.provider.isLoadMore,
@@ -138,9 +152,8 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
           child: resWidget ?? Container(),
         );
       },
-      selector: (_, P provider) =>
-          Tuple3<PageState, M, String>(
-              provider.pageState, provider.m, provider.msg),
+      selector: (_, P provider) => Tuple3<PageState, M, String>(
+          provider.pageState, provider.m, provider.msg),
     );
     return ChangeNotifierProvider<P>.value(
       value: widget.provider,
@@ -173,12 +186,18 @@ abstract class SingleProvider<M> extends ChangeNotifier {
   ///如果需要下拉刷新重写此方法
   ///并且super放在最后一行否则不会请求数据
   void onRefresh() {
+//    if (parameter is LoadMoreParameter) {
+//      (parameter as LoadMoreParameter).page =1;
+//    }
     getInfo();
   }
 
   ///如果需要上拉加载重写此方法
   ///并且super放在最后一行否则不会请求数据
   void onLoadMore() {
+    //    if (parameter is LoadMoreParameter) {
+//      (parameter as LoadMoreParameter).page += 1;
+//    }
     getInfo();
   }
 
@@ -194,15 +213,15 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   ///设置布局为空
   void setEmpty({String msg}) {
-    if (_pageState == PageState.EMPTY) {
+    if (_pageState == PageState.EMPTY && _msg == msg) {
       return;
     }
     _pageState = PageState.EMPTY;
-    _msg = _msg;
+    _msg = msg;
     notifyListeners();
   }
 
-  ///处理error
+  ///处理error一般重写
   void onError(dynamic e) {
     if (m is List && (m as List).isEmpty) {
       _pageState = PageState.EMPTY;
@@ -217,18 +236,17 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   ///设置布局为Error
   void setError({String msg}) {
-    if (_pageState == PageState.ERROR) {
+    if (_pageState == PageState.ERROR && _msg == msg) {
       return;
     }
     _pageState = PageState.ERROR;
-    _msg = _msg;
-    resetRefreshController();
+    _msg = msg;
     notifyListeners();
   }
 
   ///设置布局为未登录
   void setNoLogin({String msg}) {
-    if (_pageState == PageState.LOGIN) {
+    if (_pageState == PageState.LOGIN && _msg == msg) {
       return;
     }
     _pageState = PageState.LOGIN;
@@ -238,11 +256,11 @@ abstract class SingleProvider<M> extends ChangeNotifier {
 
   ///设置布局为加载中
   void setLoading() {
-    if (_pageState == PageState.LOADING) {
+    if (_pageState == PageState.LOADING && _msg == msg) {
       return;
     }
     _pageState = PageState.LOADING;
-    _msg = _msg;
+    _msg = msg;
     notifyListeners();
   }
 
@@ -316,10 +334,10 @@ enum PageState {
   LOGIN,
   ERROR,
 }
-
-Widget configRefresh(Widget child) {
-  return RefreshConfiguration(
-    child: child,
-    hideFooterWhenNotFull: true,
-  );
-}
+//
+//Widget configRefresh(Widget child) {
+//  return RefreshConfiguration(
+//    child: child,
+//    hideFooterWhenNotFull: true,
+//  );
+//}
