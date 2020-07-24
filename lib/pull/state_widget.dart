@@ -334,10 +334,10 @@ enum PageState {
   LOGIN,
   ERROR,
 }
-//
-//Widget configRefresh(Widget child) {
-//  return RefreshConfiguration(
-//    child: child,
-//    hideFooterWhenNotFull: true,
-//  );
-//}
+
+Widget configRefresh(Widget child) {
+  return RefreshConfiguration(
+    child: child,
+    hideFooterWhenNotFull: true,
+  );
+}
