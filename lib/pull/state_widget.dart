@@ -141,6 +141,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         }
         return SmartRefresher(
           controller: widget.provider.refreshController,
+//          scrollController: widget.provider.scrollController,
           onRefresh:
               widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading:
@@ -170,6 +171,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
 ///[getInfo]
 abstract class SingleProvider<M> extends ChangeNotifier {
   final RefreshController _refreshController = RefreshController();
+  final ScrollController _scrollController = ScrollController();
 
   ///当页面是非正常布局的msg
   String _msg;
@@ -291,6 +293,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
   void dispose() {
     debugPrint('[PROVIDER] dispose!!');
     _refreshController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -301,6 +304,8 @@ abstract class SingleProvider<M> extends ChangeNotifier {
   PageState get pageState => _pageState;
 
   RefreshController get refreshController => _refreshController;
+
+  ScrollController get scrollController => _scrollController;
 
   //页面是否需要加载更多 默认true 不需要就重写为false
   bool get isLoadMore => true;
