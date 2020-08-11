@@ -141,11 +141,12 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         }
         return SmartRefresher(
           controller: widget.provider.refreshController,
-//          scrollController: widget.provider.scrollController,
           onRefresh:
               widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading:
-              widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
+              (widget.provider.isLoadMore && pageState == PageState.CONTENT)
+                  ? widget.provider.onLoadMore
+                  : null,
           header: widget.provider.headerWidget,
           footer: widget.provider.footWidget,
           enablePullUp: widget.provider.isLoadMore,
