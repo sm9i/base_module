@@ -28,6 +28,8 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
     this.loading,
     this.autoDispose = true,
     this.emptyBuilder,
+    this.errorBuilder,
+    this.noLoginBuilder,
   }) : super(key: key);
 
   final P provider;
@@ -35,6 +37,8 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
   @Deprecated('过期的垃圾方法')
   final Widget empty;
   final StateBuilder<String> emptyBuilder;
+  final StateBuilder<String> errorBuilder;
+  final StateBuilder<String> noLoginBuilder;
 
   ///需要全部使用builder
   final Widget error;
@@ -84,8 +88,8 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
 
   Widget errorWidget({String error}) {
     Widget res;
-    if (widget.error != null) {
-      res = widget.error;
+    if (widget.errorBuilder != null) {
+      res = widget.errorBuilder(context, error);
     } else if (configState != null && configState.errorWidget != null) {
       res = configState.errorWidget;
     } else {
@@ -98,11 +102,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
     Widget res;
     if (widget.emptyBuilder != null) {
       res = widget.emptyBuilder(context, empty);
-    }
-//   else if (widget.empty != null) {
-//      res = widget.empty;
-//    }
-    else if (configState != null && configState.emptyWidget != null) {
+    } else if (configState != null && configState.emptyWidget != null) {
       res = configState.emptyWidget;
     } else {
       res = _messageWidget(empty ?? 'empty');
@@ -144,12 +144,11 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
           onRefresh:
               widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading:
-              (widget.provider.isLoadMore && pageState == PageState.CONTENT)
-                  ? widget.provider.onLoadMore
-                  : null,
+              widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
           header: widget.provider.headerWidget,
           footer: widget.provider.footWidget,
-          enablePullUp: widget.provider.isLoadMore,
+          enablePullUp:
+              widget.provider.isLoadMore && pageState == PageState.CONTENT,
           enablePullDown: widget.provider.isRefresh,
           child: resWidget ?? Container(),
         );
