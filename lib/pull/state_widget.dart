@@ -32,26 +32,34 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
     this.noLoginBuilder,
   }) : super(key: key);
 
+  ///需要监听的provider
   final P provider;
+
+  ///当主要数据 获取到后
   final StateBuilder<M> builder;
-  @Deprecated('过期的垃圾方法')
-  final Widget empty;
+
   final StateBuilder<String> emptyBuilder;
   final StateBuilder<String> errorBuilder;
   final StateBuilder<String> noLoginBuilder;
 
-  ///需要全部使用builder
+  @Deprecated('过期的垃圾方法')
+  final Widget empty;
+  @Deprecated('过期的垃圾方法')
   final Widget error;
+  @Deprecated('过期的垃圾方法')
   final Widget noLogin;
+  @Deprecated('过期的垃圾方法')
   final Widget loading;
+
+  ///是否需要自动dispose
+  ///可以提供外部自己dispose
   final bool autoDispose;
 
   @override
   _MultiStateWidgetState<P, M> createState() => _MultiStateWidgetState<P, M>();
 }
 
-class _MultiStateWidgetState<P extends SingleProvider<M>, M>
-    extends State<MultiStateWidget<P, M>> {
+class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<MultiStateWidget<P, M>> {
   ConfigState configState;
 
   @override
@@ -101,7 +109,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
   Widget emptyWidget(BuildContext context, {String empty}) {
     Widget res;
     if (widget.emptyBuilder != null) {
-      res = widget.emptyBuilder(context, empty);
+      res = widget.emptyBuilder.call(context, empty);
     } else if (configState != null && configState.emptyWidget != null) {
       res = configState.emptyWidget;
     } else {
@@ -112,7 +120,9 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
 
   Widget noLoginWidget({String msg}) {
     Widget res;
-    if (widget.noLogin != null) {
+    if (widget.noLoginBuilder != null) {
+      res = widget.noLoginBuilder.call(context, msg);
+    } else if (widget.noLogin != null) {
       res = widget.noLogin;
     } else if (configState != null && configState.noLoginWidget != null) {
       res = configState.noLoginWidget;
@@ -141,20 +151,16 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M>
         }
         return SmartRefresher(
           controller: widget.provider.refreshController,
-          onRefresh:
-              widget.provider.isRefresh ? widget.provider.onRefresh : null,
-          onLoading:
-              widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
+          onRefresh: widget.provider.isRefresh ? widget.provider.onRefresh : null,
+          onLoading: widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
           header: widget.provider.headerWidget,
           footer: widget.provider.footWidget,
-          enablePullUp:
-              widget.provider.isLoadMore && pageState == PageState.CONTENT,
+          enablePullUp: widget.provider.isLoadMore && pageState == PageState.CONTENT,
           enablePullDown: widget.provider.isRefresh,
           child: resWidget ?? Container(),
         );
       },
-      selector: (_, P provider) => Tuple3<PageState, M, String>(
-          provider.pageState, provider.m, provider.msg),
+      selector: (_, P provider) => Tuple3<PageState, M, String>(provider.pageState, provider.m, provider.msg),
     );
     return ChangeNotifierProvider<P>.value(
       value: widget.provider,

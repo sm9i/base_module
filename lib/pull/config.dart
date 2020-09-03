@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 
 class ConfigState extends InheritedWidget {
   const ConfigState({
-    @required this.child,
+    Key key,
+    @required Widget child,
     this.loadingWidget,
     this.errorWidget,
     this.emptyWidget,
     this.noLoginWidget,
-  });
+  }) : super(key: key, child: child);
 
   final Widget loadingWidget;
   final Widget errorWidget;
   final Widget emptyWidget;
   final Widget noLoginWidget;
-  final Widget child;
 
   @override
   bool updateShouldNotify(InheritedWidget oldWidget) {
