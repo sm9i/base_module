@@ -161,6 +161,11 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<Multi
         );
       },
       selector: (_, P provider) => Tuple3<PageState, M, String>(provider.pageState, provider.m, provider.msg),
+//      shouldRebuild: (Tuple3<PageState, M, String> p1, Tuple3<PageState, M, String> p2) {
+//        print('p1${p1.toString()}');
+//        print('p2${p2.toString()}');
+//        return p1 != p2;
+//      },
     );
     return ChangeNotifierProvider<P>.value(
       value: widget.provider,
