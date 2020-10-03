@@ -150,6 +150,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<Multi
           resWidget = widget.builder(context, value.item2);
         }
         return SmartRefresher(
+//          key: ValueKey<RefreshController>(widget.provider.refreshController),
           controller: widget.provider.refreshController,
           onRefresh: widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading: widget.provider.isLoadMore ? widget.provider.onLoadMore : null,

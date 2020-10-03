@@ -115,7 +115,7 @@ packages:
       name: provider
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.2"
   pull_to_refresh:
     dependency: "direct main"
     description:
