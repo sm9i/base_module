@@ -30,6 +30,9 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
     this.emptyBuilder,
     this.errorBuilder,
     this.noLoginBuilder,
+    this.physics,
+    this.header,
+    this.footer,
   }) : super(key: key);
 
   ///需要监听的provider
@@ -38,9 +41,16 @@ class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
   ///当主要数据 获取到后
   final StateBuilder<M> builder;
 
+  ///头部 只是方便列表外的Widget
+  final StateBuilder<M> header;
+
+  ///底部 只是方便列表外的Widget
+  final StateBuilder<M> footer;
+
   final StateBuilder<String> emptyBuilder;
   final StateBuilder<String> errorBuilder;
   final StateBuilder<String> noLoginBuilder;
+  final ScrollPhysics physics;
 
   @Deprecated('过期的垃圾方法')
   final Widget empty;
@@ -72,6 +82,11 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<Multi
   void didChangeDependencies() {
     configState = ConfigState.of(context);
     super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(MultiStateWidget<P, M> oldWidget) {
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -149,8 +164,7 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<Multi
         } else if (pageState == PageState.CONTENT) {
           resWidget = widget.builder(context, value.item2);
         }
-        return SmartRefresher(
-//          key: ValueKey<RefreshController>(widget.provider.refreshController),
+        final SmartRefresher builder = SmartRefresher(
           controller: widget.provider.refreshController,
           onRefresh: widget.provider.isRefresh ? widget.provider.onRefresh : null,
           onLoading: widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
@@ -159,14 +173,17 @@ class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<Multi
           enablePullUp: widget.provider.isLoadMore && pageState == PageState.CONTENT,
           enablePullDown: widget.provider.isRefresh,
           child: resWidget ?? Container(),
+          physics: widget.physics ?? const ClampingScrollPhysics(),
+        );
+        return Column(
+          children: <Widget>[
+            if (widget?.header != null) widget.header.call(context, value.item2),
+            Expanded(child: builder),
+            if (widget?.footer != null) widget.footer.call(context, value.item2),
+          ],
         );
       },
       selector: (_, P provider) => Tuple3<PageState, M, String>(provider.pageState, provider.m, provider.msg),
-//      shouldRebuild: (Tuple3<PageState, M, String> p1, Tuple3<PageState, M, String> p2) {
-//        print('p1${p1.toString()}');
-//        print('p2${p2.toString()}');
-//        return p1 != p2;
-//      },
     );
     return ChangeNotifierProvider<P>.value(
       value: widget.provider,
@@ -286,7 +303,7 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     if (m is List && m.length == 0 && checkList) {
       _pageState = PageState.EMPTY;
     } else {
-      _pageState = PageState.CONTENT;
+      _pageState = _m == null ? PageState.EMPTY : PageState.CONTENT;
     }
     notifyListeners();
   }
