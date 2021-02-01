@@ -16,8 +16,11 @@ class ConfigState extends InheritedWidget {
   final Widget noLoginWidget;
 
   @override
-  bool updateShouldNotify(InheritedWidget oldWidget) {
-    return true;
+  bool updateShouldNotify(covariant ConfigState oldWidget) {
+    return oldWidget.loadingWidget != loadingWidget ||
+        oldWidget.errorWidget != errorWidget ||
+        oldWidget.emptyWidget != emptyWidget ||
+        oldWidget.noLoginWidget != noLoginWidget;
   }
 
   static ConfigState of(BuildContext context) {

@@ -1,240 +1,34 @@
-import 'package:base_module/pull/config.dart';
-import 'package:flutter/cupertino.dart';
+// import 'package:base_module/pull/config.dart';
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:pull_to_refresh/pull_to_refresh.dart';
+// import 'package:tuple/tuple.dart';
+//
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/status/http_status.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:tuple/tuple.dart';
 
 typedef StateBuilder<M> = Widget Function(BuildContext context, M m);
 
-///多状态布局
-///[provider] 需要的provider
-///[P] 继承自[SingleProvider] 的provider
-///[M] 页面需要的主要数据
-///[builder]build 页面提供[M]
-///[empty] 当页面是空的时候展示的页面
-///[error] 当页面是error
-///[noLogin] 未登录
-///[loading] loading
-///[autoDispose] 是否自动dispose
-class MultiStateWidget<P extends SingleProvider<M>, M> extends StatefulWidget {
-  const MultiStateWidget({
-    Key key,
-    @required this.provider,
-    @required this.builder,
-    this.empty,
-    this.error,
-    this.noLogin,
-    this.loading,
-    this.autoDispose = true,
-    this.emptyBuilder,
-    this.errorBuilder,
-    this.noLoginBuilder,
-    this.physics,
-    this.header,
-    this.footer,
-  }) : super(key: key);
-
-  ///需要监听的provider
-  final P provider;
-
-  ///当主要数据 获取到后
-  final StateBuilder<M> builder;
-
-  ///头部 只是方便列表外的Widget
-  final StateBuilder<M> header;
-
-  ///底部 只是方便列表外的Widget
-  final StateBuilder<M> footer;
-
-  final StateBuilder<String> emptyBuilder;
-  final StateBuilder<String> errorBuilder;
-  final StateBuilder<String> noLoginBuilder;
-  final ScrollPhysics physics;
-
-  @Deprecated('过期的垃圾方法')
-  final Widget empty;
-  @Deprecated('过期的垃圾方法')
-  final Widget error;
-  @Deprecated('过期的垃圾方法')
-  final Widget noLogin;
-  @Deprecated('过期的垃圾方法')
-  final Widget loading;
-
-  ///是否需要自动dispose
-  ///可以提供外部自己dispose
-  final bool autoDispose;
-
+class MultiStateWidget extends StatefulWidget {
   @override
-  _MultiStateWidgetState<P, M> createState() => _MultiStateWidgetState<P, M>();
+  _MultiStateWidgetState createState() => _MultiStateWidgetState();
 }
 
-class _MultiStateWidgetState<P extends SingleProvider<M>, M> extends State<MultiStateWidget<P, M>> {
-  ConfigState configState;
-
-  @override
-  void initState() {
-    widget.provider.getInfo();
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    configState = ConfigState.of(context);
-    super.didChangeDependencies();
-  }
-
-  @override
-  void didUpdateWidget(MultiStateWidget<P, M> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    if (widget.autoDispose) {
-      widget.provider.dispose();
-    }
-    super.dispose();
-  }
-
-  Widget loadingWidget() {
-    Widget res;
-    if (widget.loading != null) {
-      res = widget.loading;
-    } else if (configState != null && configState.loadingWidget != null) {
-      res = configState.loadingWidget;
-    } else {
-      res = const CupertinoActivityIndicator();
-    }
-    return Center(child: res);
-  }
-
-  Widget errorWidget({String error}) {
-    Widget res;
-    if (widget.errorBuilder != null) {
-      res = widget.errorBuilder(context, error);
-    } else if (configState != null && configState.errorWidget != null) {
-      res = configState.errorWidget;
-    } else {
-      res = _messageWidget(error ?? 'error');
-    }
-    return Center(child: res);
-  }
-
-  Widget emptyWidget(BuildContext context, {String empty}) {
-    Widget res;
-    if (widget.emptyBuilder != null) {
-      res = widget.emptyBuilder.call(context, empty);
-    } else if (configState != null && configState.emptyWidget != null) {
-      res = configState.emptyWidget;
-    } else {
-      res = _messageWidget(empty ?? 'empty');
-    }
-    return Center(child: res);
-  }
-
-  Widget noLoginWidget({String msg}) {
-    Widget res;
-    if (widget.noLoginBuilder != null) {
-      res = widget.noLoginBuilder.call(context, msg);
-    } else if (widget.noLogin != null) {
-      res = widget.noLogin;
-    } else if (configState != null && configState.noLoginWidget != null) {
-      res = configState.noLoginWidget;
-    } else {
-      res = _messageWidget(msg ?? 'no login');
-    }
-    return Center(child: res);
-  }
-
+class _MultiStateWidgetState extends State<MultiStateWidget> {
   @override
   Widget build(BuildContext context) {
-    final Widget selector = Selector<P, Tuple3<PageState, M, String>>(
-      builder: (BuildContext context, Tuple3<PageState, M, String> value, __) {
-        final PageState pageState = value.item1;
-        Widget resWidget;
-        if (pageState == PageState.LOADING) {
-          resWidget = loadingWidget();
-        } else if (pageState == PageState.ERROR) {
-          resWidget = errorWidget(error: value.item3);
-        } else if (pageState == PageState.EMPTY) {
-          resWidget = emptyWidget(context, empty: value.item3);
-        } else if (pageState == PageState.LOGIN) {
-          resWidget = noLoginWidget(msg: value.item3);
-        } else if (pageState == PageState.CONTENT) {
-          resWidget = widget.builder(context, value.item2);
-        }
-        final SmartRefresher builder = SmartRefresher(
-          controller: widget.provider.refreshController,
-          onRefresh: widget.provider.isRefresh ? widget.provider.onRefresh : null,
-          onLoading: widget.provider.isLoadMore ? widget.provider.onLoadMore : null,
-          header: widget.provider.headerWidget,
-          footer: widget.provider.footWidget,
-          enablePullUp: widget.provider.isLoadMore && pageState == PageState.CONTENT,
-          enablePullDown: widget.provider.isRefresh,
-          child: resWidget ?? Container(),
-          physics: widget.physics ?? const ClampingScrollPhysics(),
-        );
-        return Column(
-          children: <Widget>[
-            if (widget?.header != null) widget.header.call(context, value.item2),
-            Expanded(child: builder),
-            if (widget?.footer != null) widget.footer.call(context, value.item2),
-          ],
-        );
-      },
-      selector: (_, P provider) => Tuple3<PageState, M, String>(provider.pageState, provider.m, provider.msg),
-    );
-    return ChangeNotifierProvider<P>.value(
-      value: widget.provider,
-      child: selector,
-    );
-  }
-
-  Widget _messageWidget(String s) {
-    return Text(s);
+    return Container();
   }
 }
 
-///用来控制页面的provider
-///[getInfo]
-abstract class SingleProvider<M> extends ChangeNotifier {
-  final RefreshController _refreshController = RefreshController();
-  final ScrollController _scrollController = ScrollController();
+abstract class SingleGet<M> extends GetxController {
+  Rx<PageState> _pageState;
 
-  ///当页面是非正常布局的msg
-  String _msg;
+  Rx<M> _m;
 
-  ///页面当前的状态 默认为加载中
-  PageState _pageState = PageState.LOADING;
-
-  ///页面需要的主要数据
-  M _m;
-
-  ///请求所需要的参数 如果需要监听就需要重写==
-  ProviderParameter get parameter => null;
-
-  ///如果需要下拉刷新重写此方法
-  ///并且super放在最后一行否则不会请求数据
-  void onRefresh() {
-//    if (parameter is LoadMoreParameter) {
-//      (parameter as LoadMoreParameter).page =1;
-//    }
-    getInfo();
-  }
-
-  ///如果需要上拉加载重写此方法
-  ///并且super放在最后一行否则不会请求数据
-  void onLoadMore() {
-    //    if (parameter is LoadMoreParameter) {
-//      (parameter as LoadMoreParameter).page += 1;
-//    }
-    getInfo();
-  }
-
-  ///获取数据方法
-  ///必须重写调用
-  ///熙增checkLoading 是否在刷新前loading 必须在获取数据前super;
   @mustCallSuper
   void getInfo([bool checkLoading = false]) {
     if (checkLoading) {
@@ -242,125 +36,63 @@ abstract class SingleProvider<M> extends ChangeNotifier {
     }
   }
 
-  ///设置布局为空
-  void setEmpty({String msg}) {
-    if (_pageState == PageState.EMPTY && _msg == msg) {
-      return;
-    }
-    _pageState = PageState.EMPTY;
-    _msg = msg;
-    notifyListeners();
-  }
-
-  ///处理error一般重写
-  void onError(dynamic e) {
-    if (m is List && (m as List).isEmpty) {
-      _pageState = PageState.EMPTY;
-      _refreshController.loadFailed();
-      return;
-    }
-    _refreshController.refreshFailed();
-    _refreshController.loadFailed();
-    setError();
-    debugPrint('[PROVIDER] onError!!');
-  }
-
-  ///设置布局为Error
-  void setError({String msg}) {
-    if (_pageState == PageState.ERROR && _msg == msg) {
-      return;
-    }
-    _pageState = PageState.ERROR;
-    _msg = msg;
-    notifyListeners();
-  }
-
-  ///设置布局为未登录
-  void setNoLogin({String msg}) {
-    if (_pageState == PageState.LOGIN && _msg == msg) {
-      return;
-    }
-    _pageState = PageState.LOGIN;
-    _msg = msg;
-    notifyListeners();
-  }
-
-  ///设置布局为加载中
-  void setLoading() {
-    if (_pageState == PageState.LOADING && _msg == msg) {
-      return;
-    }
-    _pageState = PageState.LOADING;
-    _msg = msg;
-    notifyListeners();
-  }
-
-  ///设置数据页面
-  ///如果数据为list 就会判断数据长度是否为0
-  ///[checkList]是否通过判断m是list然后去给定空界面
   void setContent(M m, {bool checkList = true}) {
-    _m = m;
-    if (m is List && m.length == 0 && checkList) {
-      _pageState = PageState.EMPTY;
+    if (m is List && m.length == 0 && checkList && _pageState.canUpdate) {
+      _pageState.update((PageState val) {
+        val = PageState.EMPTY;
+      });
     } else {
-      _pageState = _m == null ? PageState.EMPTY : PageState.CONTENT;
-    }
-    notifyListeners();
-  }
-
-  ///重置controller
-  void resetRefreshController({bool noData = false}) {
-    refreshController.refreshCompleted();
-    if (noData) {
-      refreshController.loadNoData();
-    } else {
-      refreshController.loadComplete();
+      if (_pageState.canUpdate) {
+        _pageState.update((PageState val) {
+          val = PageState.CONTENT;
+        });
+      }
+      if (_m.canUpdate) {
+        _m.update((M val) {
+          val = m;
+        });
+      }
     }
   }
 
-  @override
-  void dispose() {
-    debugPrint('[PROVIDER] dispose!!');
-    _refreshController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  void setLoading() {
+    if (_pageState.value == PageState.LOADING) {
+      return;
+    }
+    if (_pageState.canUpdate) {
+      _pageState.update((PageState val) {
+        val = PageState.LOADING;
+      });
+    }
   }
 
-  M get m => _m;
+  void setEmpty() {
+    if (_pageState.value == PageState.EMPTY) {
+      return;
+    }
+    if (_pageState.canUpdate) {
+      _pageState.update((PageState val) {
+        val = PageState.EMPTY;
+      });
+    }
+  }
 
-  String get msg => _msg;
+  void setError() {
+    if (_pageState.value == PageState.ERROR) {
+      return;
+    }
+    if (_pageState.canUpdate) {
+      _pageState.update((PageState val) {
+        val = PageState.ERROR;
+      });
+    }
+  }
 
-  PageState get pageState => _pageState;
+  bool get isLoadMore => false;
 
-  RefreshController get refreshController => _refreshController;
-
-  ScrollController get scrollController => _scrollController;
-
-  //页面是否需要加载更多 默认true 不需要就重写为false
-  bool get isLoadMore => true;
-
-//页面是否需要下拉刷新 默认true 不需要就重写为false
   bool get isRefresh => true;
-
-  Widget get headerWidget => const ClassicHeader();
-
-  Widget get footWidget => const ClassicFooter();
 }
 
-///请求参数
-mixin ProviderParameter {}
-
-///如果需要分页的参数
-///如果需要toJson必须带page 和size
-class LoadMoreParameter with ProviderParameter {
-  ///默认分页从[page]开始 一页[size] 个
-  LoadMoreParameter({this.page = 1, this.size = 15});
-
-  int page;
-  int size;
-}
-
-///页面状态
 enum PageState {
   EMPTY,
   LOADING,
@@ -370,8 +102,5 @@ enum PageState {
 }
 
 Widget configRefresh(Widget child) {
-  return RefreshConfiguration(
-    child: child,
-    hideFooterWhenNotFull: true,
-  );
+  return RefreshConfiguration(child: child, hideFooterWhenNotFull: true);
 }

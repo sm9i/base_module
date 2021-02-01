@@ -5,14 +5,13 @@ author: sm9i
 homepage: https://github.com/sm9i
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.10.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  provider: 4.3.2+2
-  pull_to_refresh: 1.6.0
-  tuple: 1.0.3
+  get: 3.24.0
+  pull_to_refresh: 1.6.4
 
 
 
