@@ -11,7 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   provider: 4.3.2+2
-  pull_to_refresh: 1.6.0
+  pull_to_refresh: 1.6.3
+  #  pull_to_refresh:
+  #    path: /Users/yiwang/Application/flutter_application/package/flutter_pulltorefresh/
   tuple: 1.0.3
 
 
