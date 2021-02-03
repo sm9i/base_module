@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class ConfigState extends InheritedWidget {
   const ConfigState({
@@ -8,6 +9,8 @@ class ConfigState extends InheritedWidget {
     this.errorWidget,
     this.emptyWidget,
     this.noLoginWidget,
+    this.footerWidget,
+    this.headerWidget,
   }) : super(key: key, child: child);
 
   final Widget loadingWidget;
@@ -15,15 +18,24 @@ class ConfigState extends InheritedWidget {
   final Widget emptyWidget;
   final Widget noLoginWidget;
 
+  final Widget footerWidget;
+  final Widget headerWidget;
+
   @override
   bool updateShouldNotify(covariant ConfigState oldWidget) {
     return oldWidget.loadingWidget != loadingWidget ||
         oldWidget.errorWidget != errorWidget ||
         oldWidget.emptyWidget != emptyWidget ||
+        oldWidget.footerWidget != footerWidget ||
+        oldWidget.headerWidget != headerWidget ||
         oldWidget.noLoginWidget != noLoginWidget;
   }
 
   static ConfigState of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ConfigState>();
   }
+}
+
+Widget configRefresh(Widget child) {
+  return RefreshConfiguration(child: child, hideFooterWhenNotFull: true);
 }
