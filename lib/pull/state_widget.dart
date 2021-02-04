@@ -17,7 +17,8 @@ class MultiStateWidget<M> extends StatelessWidget {
     this.error,
     this.loading,
     String tag,
-  })  : _control = Get.find(tag: tag),
+    BaseControl<M> control,
+  })  : _control = control ?? Get.find(tag: tag),
         super(key: key);
 
   ///布局builder
@@ -112,27 +113,24 @@ class BaseControl<M> extends GetxController {
   void onClose() {
     _refreshController.dispose();
     _scrollController.dispose();
-    Get.log("close");
-
+    Get.log('close');
     super.onClose();
   }
 
   void onRefresh() => getInfo();
 
-  void onLoadMore() {}
+  void onLoadMore() => getInfo();
 
   void setContent(M m, {bool checkList = true}) {
     if (m is List && m.length == 0 && checkList) {
-      _pageState.update((PageState val) {
-        val = PageState.EMPTY;
-      });
+      _pageState.value = PageState.EMPTY;
     } else {
-      _pageState.update((PageState val) {
-        val = PageState.CONTENT;
-      });
-      _m.update((M val) {
-        val = m;
-      });
+      if (_m == null) {
+        _m = Rx<M>(m);
+      } else {
+        _m.value = m;
+      }
+      _pageState.value = PageState.CONTENT;
     }
   }
 
@@ -140,32 +138,27 @@ class BaseControl<M> extends GetxController {
     if (_pageState.value == PageState.LOADING) {
       return;
     }
-    _pageState.update((PageState val) {
-      val = PageState.LOADING;
-    });
+    _pageState.value = PageState.LOADING;
+    print(_pageState);
   }
 
   void setEmpty() {
     if (_pageState.value == PageState.EMPTY) {
       return;
     }
-    _pageState.update((PageState val) {
-      val = PageState.EMPTY;
-    });
+    _pageState.value = PageState.EMPTY;
   }
 
   void setError() {
     if (_pageState.value == PageState.ERROR) {
       return;
     }
-    _pageState.update((PageState val) {
-      val = PageState.ERROR;
-    });
+    _pageState.value = PageState.ERROR;
   }
 
   bool get isLoadMore => false;
 
-  bool get isRefresh => true;
+  bool get isRefresh => false;
 
   Rx<M> get m => _m;
 
