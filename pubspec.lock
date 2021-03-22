@@ -43,6 +43,20 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.15.0"
+  extended_list:
+    dependency: transitive
+    description:
+      name: extended_list
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.0"
+  extended_list_library:
+    dependency: transitive
+    description:
+      name: extended_list_library
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -66,7 +80,21 @@ packages:
       name: get
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "3.24.0"
+    version: "3.26.0"
+  loading_more_list:
+    dependency: "direct main"
+    description:
+      name: loading_more_list
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "4.0.0"
+  loading_more_list_library:
+    dependency: transitive
+    description:
+      name: loading_more_list_library
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.1"
   matcher:
     dependency: transitive
     description:
@@ -88,13 +116,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.8.0"
-  pull_to_refresh:
+  pull_to_refresh_notification:
     dependency: "direct main"
     description:
-      name: pull_to_refresh
+      name: pull_to_refresh_notification
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.6.3"
+    version: "2.0.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -156,6 +184,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.0"
+  waterfall_flow:
+    dependency: transitive
+    description:
+      name: waterfall_flow
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.1"
 sdks:
-  dart: ">=2.12.0-0.0 <3.0.0"
-  flutter: ">=0.1.4"
+  dart: ">=2.12.0 <3.0.0"
+  flutter: ">=2.0.0"
