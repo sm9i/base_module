@@ -10,8 +10,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+<<<<<<< HEAD
   get: 4.1.4
   pull_to_refresh: 1.6.3
+=======
+  get: 3.26.0
+  pull_to_refresh_notification: 2.0.1
+  loading_more_list: 4.0.0
+>>>>>>> 5d40951743fb29a477c06f650a3314fab569141d
 
 
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class ConfigState extends InheritedWidget {
   const ConfigState({
@@ -36,6 +35,6 @@ class ConfigState extends InheritedWidget {
   }
 }
 
-Widget configRefresh(Widget child) {
-  return RefreshConfiguration(child: child, hideFooterWhenNotFull: true);
-}
+// Widget configRefresh(Widget child) {
+//   return RefreshConfiguration(child: child, hideFooterWhenNotFull: true);
+// }
