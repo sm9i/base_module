@@ -3,8 +3,8 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class ConfigState extends InheritedWidget {
   const ConfigState({
-    Key key,
-    @required Widget child,
+    Key? key,
+    required Widget child,
     this.loadingWidget,
     this.errorWidget,
     this.emptyWidget,
@@ -13,13 +13,13 @@ class ConfigState extends InheritedWidget {
     this.headerWidget,
   }) : super(key: key, child: child);
 
-  final Widget loadingWidget;
-  final Widget errorWidget;
-  final Widget emptyWidget;
-  final Widget noLoginWidget;
+  final Widget? loadingWidget;
+  final Widget? errorWidget;
+  final Widget? emptyWidget;
+  final Widget? noLoginWidget;
 
-  final Widget footerWidget;
-  final Widget headerWidget;
+  final Widget? footerWidget;
+  final Widget? headerWidget;
 
   @override
   bool updateShouldNotify(covariant ConfigState oldWidget) {
@@ -31,7 +31,7 @@ class ConfigState extends InheritedWidget {
         oldWidget.noLoginWidget != noLoginWidget;
   }
 
-  static ConfigState of(BuildContext context) {
+  static ConfigState? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ConfigState>();
   }
 }
