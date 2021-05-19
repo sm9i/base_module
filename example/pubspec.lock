@@ -8,6 +8,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.5.0"
+  base_module:
+    dependency: "direct main"
+    description:
+      path: ".."
+      relative: true
+    source: path
+    version: "0.0.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -68,7 +75,7 @@ packages:
     source: sdk
     version: "0.0.0"
   get:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: get
       url: "https://pub.flutter-io.cn"
@@ -95,6 +102,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.8.0"
+  pull_to_refresh:
+    dependency: transitive
+    description:
+      name: pull_to_refresh
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -158,3 +172,4 @@ packages:
     version: "2.1.0"
 sdks:
   dart: ">=2.12.0 <3.0.0"
+  flutter: ">=2.0.0"
