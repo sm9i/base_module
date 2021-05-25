@@ -57,35 +57,35 @@ class MultiStateWidget<M, C extends StateController<M>> extends GetView<C> {
   Widget contentWidget() {
     return Builder(builder: (BuildContext context) {
       return Expanded(child: Obx(() {
-        if (controller._state.value == _State.CONTENT) {
-          return SmartRefresher(
-            scrollController: controller.scrollController,
-            controller: controller.refreshController,
-
-            child: builder(context, controller._content.value),
-
-            ///是否可以加载更多
-            ///设置 并且当前页面状态是content
-            enablePullUp: controller.canLoadMore() && controller._state.value == _State.CONTENT,
-
-            ///是否可以刷新
-            enablePullDown: controller.canRefresh(),
-
-            ///下拉
-            onRefresh: controller.canRefresh() ? controller._onRefresh : null,
-
-            ///上拉
-            onLoading: controller.canLoadMore() ? controller._onLoadMore : null,
-          );
-        } else if (controller._state.value == _State.ERROR) {
-          return Center(child: errorWidget());
-        } else if (controller._state.value == _State.EMPTY) {
-          return Center(child: emptyWidget());
-        } else if (controller._state.value == _State.LOADING) {
-          return Center(child: loadingWidget());
-        } else {
-          return const SizedBox();
+        Widget result = const SizedBox();
+        if (controller.state.value == _State.CONTENT) {
+          result = builder(context, controller._content.value);
+        } else if (controller.state.value == _State.ERROR) {
+          result = Center(child: errorWidget());
+        } else if (controller.state.value == _State.EMPTY) {
+          result = Center(child: emptyWidget());
+        } else if (controller.state.value == _State.LOADING) {
+          result = Center(child: loadingWidget());
         }
+        return SmartRefresher(
+          scrollController: controller.scrollController,
+          controller: controller.refreshController,
+
+          child: result,
+
+          ///是否可以加载更多
+          ///设置 并且当前页面状态是content
+          enablePullUp: controller.canLoadMore() && controller.state.value == _State.CONTENT,
+
+          ///是否可以刷新
+          enablePullDown: controller.canRefresh() && controller.state.value != _State.LOADING,
+
+          ///下拉
+          onRefresh: controller.canRefresh() ? controller._onRefresh : null,
+
+          ///上拉
+          onLoading: controller.canLoadMore() ? controller._onLoadMore : null,
+        );
       }));
     });
   }
@@ -126,6 +126,33 @@ abstract class StateController<T> extends GetxController {
   void getInfo([bool? changeLoading]) {
     if (changeLoading != null && changeLoading) {
       setLoading();
+    }
+  }
+
+  ///设置刷新成功了
+  void loadCompleted() {
+    if (refreshController.headerStatus == RefreshStatus.refreshing) {
+      refreshController.refreshCompleted();
+    }
+    if (refreshController.footerStatus == LoadStatus.loading) {
+      refreshController.loadComplete();
+    }
+  }
+
+  ///设置失败
+  void loadFailed() {
+    if (refreshController.headerStatus == RefreshStatus.refreshing) {
+      refreshController.refreshFailed();
+    }
+    if (refreshController.footerStatus == LoadStatus.loading) {
+      refreshController.loadFailed();
+    }
+  }
+
+  ///设置没有更多数据了
+  void loadNoMore() {
+    if (refreshController.footerStatus == LoadStatus.loading) {
+      refreshController.loadNoData();
     }
   }
 
@@ -190,6 +217,7 @@ abstract class StateController<T> extends GetxController {
   @override
   void onReady() {
     _log('onReady');
+    _onRefresh();
     super.onReady();
   }
 
